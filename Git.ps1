@@ -1,0 +1,5 @@
+
+
+function Log () {
+    git log
+}
