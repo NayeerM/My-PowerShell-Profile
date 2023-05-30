@@ -5,11 +5,11 @@ oh-my-posh init pwsh --config 'C:\Users\nayeer\AppData\Local\Programs\oh-my-posh
  . 'D:\MyPowerShellProfile\Git.ps1'
 
 # PSReadline Settings
-Set-PSReadlineOption -TokenKind Command -ForegroundColor Green
-Set-PSReadlineKeyHandler -Key Tab -Function Complete
-Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
-Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
-Set-PSReadlineOption -EditMode Windows
+# Set-PSReadlineOption -TokenKind Command -ForegroundColor Green
+# Set-PSReadlineKeyHandler -Key Tab -Function Complete
+# Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
+# Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
+# Set-PSReadlineOption -EditMode Windows
 
 function Set-Folder {
     param (
