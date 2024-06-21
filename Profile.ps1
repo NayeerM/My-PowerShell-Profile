@@ -3,6 +3,7 @@
 oh-my-posh init pwsh --config 'C:\Users\nayeer\AppData\Local\Programs\oh-my-posh\themes\m365princess.omp.json' | Invoke-Expression
 # Import modules
  . 'D:\MyPowerShellProfile\Git.ps1'
+ . 'D:\MyPowerShellProfile\Database.ps1'
 
 # PSReadline Settings
 # Set-PSReadlineOption -TokenKind Command -ForegroundColor Green
