@@ -56,34 +56,46 @@ function Convert-TableToEFModel {
   }
   
 
-  function RestoreDBBackup {
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$DBName
-    )
+function RestoreDBBackup {
+  param(
+      [Parameter(Mandatory=$true)]
+      [string]$DBName
+  )
 
-    # Replace with the appropriate values
-    $serverName = "Nayeer-PC"
-    $backupFolder = "D:\DatabaseBackup"
-    $userName = "sa"
-    $password = "123"
-    $dataFilePath = "D:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA" # Specify the desired location for data files
+  # Replace with the appropriate values
+  $serverName = "Nayeer-PC"
+  $backupFolder = "D:\DatabaseBackup"
+  $userName = "sa"
+  $password = "123"
+  $dataFilePath = "D:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA"
+  $networkBackupPath = "\\192.168.2.70\isem10"
 
-    # Find the latest backup file
-    $latestBackupFile = Get-ChildItem -Path $backupFolder -Filter "*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  # Find the latest backup file in the local folder
+  $latestLocalBackup = Get-ChildItem -Path $backupFolder -Filter "*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-    if ($null -eq $latestBackupFile) {
-        Write-Error "No backup files found in $backupFolder"
-        return
-    }
+  # Find the latest backup file in the network folder
+  $latestNetworkBackup = Get-ChildItem -Path $networkBackupPath -Filter "*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-    # Restore the database
-    $dataFile = Join-Path $dataFilePath "$DBName.mdf"
-    $logFile = Join-Path $dataFilePath "$DBName_log.ldf"
-    $backupFile = $latestBackupFile.FullName
+  if ($null -eq $latestLocalBackup -and $null -eq $latestNetworkBackup) {
+      Write-Error "No backup files found in $backupFolder or $networkBackupPath"
+      return
+  }
+
+  # Compare the latest backups and copy if necessary
+  if ($null -eq $latestLocalBackup -or ($null -ne $latestNetworkBackup -and $latestNetworkBackup.LastWriteTime -gt $latestLocalBackup.LastWriteTime)) {
+      Write-Output "Copying latest backup from network share..."
+      Copy-Item -Path $latestNetworkBackup.FullName -Destination $backupFolder -Force
+      $latestBackupFile = Get-ChildItem -Path $backupFolder -Filter "*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  } else {
+      $latestBackupFile = $latestLocalBackup
+  }
+
+  # Restore the database
+  $dataFile = Join-Path $dataFilePath "$DBName.mdf"
+  $logFile = Join-Path $dataFilePath "$DBName_log.ldf"
+  $backupFile = $latestBackupFile.FullName
 
   $query = @"
-
 IF EXISTS (SELECT * FROM sys.databases WHERE name = '$DBName')
 BEGIN
 ALTER DATABASE [$DBName] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
@@ -93,10 +105,10 @@ GO
 RESTORE DATABASE [$DBName]
 FROM DISK = N'$backupFile'
 WITH REPLACE,
-    MOVE N'ISEM_BANK_PANDA' TO N'$dataFile',
-    MOVE N'ISEM_BANK_PANDA_log' TO N'$logFile',
-    NOUNLOAD,
-    STATS = 5
+  MOVE N'ISEM_BANK_PANDA' TO N'$dataFile',
+  MOVE N'ISEM_BANK_PANDA_log' TO N'$logFile',
+  NOUNLOAD,
+  STATS = 5
 GO
 
 ALTER DATABASE [$DBName] SET MULTI_USER
